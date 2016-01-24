@@ -11,13 +11,13 @@ public class PacketHandler {
     {
         { "policy-file-request", Policy },
         { "y",Y},
-        { "j2", J2}
+       // { "j2", J2}
     };
 
     private static void J2(Dictionary<string, string> arg1, Client arg2) {
-        if(arg2.authenticated == true) {
+     //   if(arg2.authenticated == true) {
             // return disconnect user
-        }
+       // }
        
     }
 
@@ -26,7 +26,7 @@ public class PacketHandler {
         var time = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
         arg2.sendJ2 = false;
         //I'm using a custom client so this values are different from the main client
-        var ma = $"[{rand.Next(0, 32) + time % 32},{rand.Next(32, 64) + time % 64},{rand.Next(64, 128) + time % 128},{rand.Next(128, 256) + time % 256}]";
+        var ma = $"[24,15,45,45]";
         Dictionary<string, string> YPack = new Dictionary<string, string>
         {
             { "yi",rand.Next(10000000, 99999999).ToString() },
@@ -36,7 +36,6 @@ public class PacketHandler {
             { "ya",ma },
             { "yp","100_100_5_13821"}
         };
-        Console.WriteLine(Server.createPacket(YPack, "y"));
         Server.Send(arg2._client, Server.createPacket(YPack, "y"));
     }
     private static void Policy(Dictionary<string, string> arg1, Client arg2) {

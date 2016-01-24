@@ -50,6 +50,7 @@ namespace iXat_Server {
         }
         public static void Send(Socket soc,string data) {
             var datab = Encoding.ASCII.GetBytes(data);
+            Console.WriteLine($"[SERVER]-[INFO]: Send -> {data}", Console.ForegroundColor = ConsoleColor.Green);
             soc.BeginSend(datab, 0, datab.Length, 0, new AsyncCallback(SendCallBack), soc);
         }
 
@@ -57,7 +58,6 @@ namespace iXat_Server {
             try {
                 Socket handler = (Socket)ar.AsyncState;
                 int bytesSent = handler.EndSend(ar);
-                Console.WriteLine("Sent {0} bytes to client.", bytesSent);
             }
             catch (Exception e) {
                 Console.WriteLine(e.ToString());
@@ -78,9 +78,9 @@ namespace iXat_Server {
                 if (C == null || C._client == null) return;
                 var bytestoread = C._client.EndReceive(result);
                 if(bytestoread > 0) {
-                    string g = Encoding.ASCII.GetString(C.buffer,0,bytestoread);
-                    Console.WriteLine(g);
-                    Match findtype = PacketHandler.typeofpacket.Match(g);
+                    string recv = Encoding.ASCII.GetString(C.buffer,0,bytestoread);
+                    Console.WriteLine($"[SERVER]-[INFO]: Received -> {recv}", Console.ForegroundColor = ConsoleColor.Magenta);
+                    Match findtype = PacketHandler.typeofpacket.Match(recv);
                     if (findtype.Success)
                         PacketHandler.HandlePacket[findtype.Groups[1].Value](null, C);                          
                 }

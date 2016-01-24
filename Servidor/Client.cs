@@ -24,6 +24,8 @@ public class Client  {
         _client = client;
     }
     public void authenticate(Dictionary<string,string> packet) {
+        //Information from the j2
+        var information = new string[] { "auth", "auth2", "u", "N", "k", "y", "fuckm1", "fuckm2", "huem3", "huem4", "h", "d0", "a", "c", "banned", "r", "b", "cv" };
 
     }
    
