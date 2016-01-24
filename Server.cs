@@ -71,10 +71,10 @@ namespace iXat_Server {
                 var bytestoread = C._client.EndReceive(result);
                 if(bytestoread > 0) {
                     string g = Encoding.ASCII.GetString(C.buffer,0,bytestoread);
+                    Console.WriteLine(g);
                     Match findtype = PacketHandler.typeofpacket.Match(g);
                     if (findtype.Success)
                         PacketHandler.HandlePacket[findtype.Groups[1].Value](null, C);                          
-                    Console.WriteLine(g);
                 }
                 C._client.BeginReceive(C.buffer, 0, C.buffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), C);
             }

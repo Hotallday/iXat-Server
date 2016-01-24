@@ -14,22 +14,9 @@ using System.Xml;
 
 namespace iXat_Server {
     class Program {
-        
-        public static Regex regex = new Regex(@"<([-\w]+)");
-        private static ushort limitofconnections = 100;
         static void Main(string[] args) {
             Server.Start();
             Console.Read();
-        }
-
-        public static string createPacket(Dictionary<string, string> data, string name = "packet") {
-            var str = $"<{name}";
-            if (data.Count > 0) {
-                foreach (var attr in data) {
-                    str += $" {attr.Key}=\"{attr.Value}\"";
-                }
-            }
-            return str += " />";
         }
     }
 }
