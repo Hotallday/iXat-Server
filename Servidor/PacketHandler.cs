@@ -36,7 +36,8 @@ public class PacketHandler {
             { "ya",ma },
             { "yp","100_100_5_13821"}
         };
-        Server.Send(arg2._client, Server.createPacket(YPack, "y"));
+        Console.WriteLine(Server.CreatePacket(YPack, "y"));
+        Server.Send(arg2._client, Server.CreatePacket(YPack, "y"));
     }
     private static void Policy(Dictionary<string, string> arg1, Client arg2) {
         if (arg2.policy == 0) {
