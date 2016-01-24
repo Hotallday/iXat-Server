@@ -18,11 +18,10 @@ public class  Client : IDisposable {
     public string homepage, h, group, pStr, pStr2;
     public string hash2 = "", loginkey = null, pawn = "";
     public int poolLimit = 60, app = 0, policy = 0, rExpired = 0;
-    public Dictionary<string, object> last, last2, GroupPools = new Dictionary<string, object>();
-    public Dictionary<int, int> GroupPowers = new Dictionary<int, int>();
+    public Dictionary<string, object> last, last2, GroupPools, GroupPowers = new Dictionary<string, object>();
     public bool hidden = false, b2, b, guest = true, botOnline = false, sendJ2 = false, gotTickled = false, _null = false, switchingPools = false, joined = false, away = false, authenticated = false, online = false, disconnect = false, mobready = false, chatPass = false;
     public string handshake, cv;
-    public byte[] buffer = new byte[1024];
+    public byte[] buffer = new byte[1204];
     public uint[] l5 = new uint[] { 4286545791, 4286217085, 4285954170, 4285756791, 4285625204, 4285493618 };
     public Client(Socket client) {
         _client = client;
@@ -113,14 +112,14 @@ public class  Client : IDisposable {
             }
             if (await Database.Open()) {
                 var chatinfo = await Database.FetchArray($"SELECT * FROM chats WHERE id={chat}");
-                this.pool = pool;
-                this.chat = chatinfo["id"].ToString();
-                //this.chatid (int)chatinfo["id"] },
-                group = (string)chatinfo["name"];
-                hidden = false;
-               // {"HasGroupPools", false},
-               // {"hidden", false}
-
+                var items = new Dictionary<string, object>() {
+                {"pool",pool},
+                {"chat",chatinfo["id"]},
+                {"chatid",chatinfo["id"] },
+                {"group", chatinfo["name"]},
+                {"HasGroupPools", false},
+                {"hidden", false}
+            };
                 var ranks = await Database.FetchArray($"SELECT * FROM ranks WHERE chatid='{chatinfo["id"]}' AND userid='{id}'");
                 ///Login to chat panel to get main owner
                 if (chatPass) {
@@ -163,17 +162,10 @@ public class  Client : IDisposable {
                 var pawn = this.pawn.Length == 6 ? $" pawn=\"{this.pawn}\"" : "";
                 var mnick = $"Testing{PacketHandler.rand.Next(0,110)}";
                 var myPackity = $"<u{pawn} f=\"{f}\" flag=\"{f}\" rank=\"{RealRank}\" u=\"{id}\" q=\"3\" {(string.IsNullOrWhiteSpace(username) ? "" : $"N=\"{username}\"")} n=\"{mnick}\" a=\"{avatar}\" h=\"{url}\" d0=\"{d0}\" d2=\"{d2}\" bride=\"{bride}\" {pStr}v=\"2\" cb=\"{(int)(DateTime.UtcNow - Server.StartTime).TotalSeconds}\" />\0";
+                Server.Broadcast(myPackity,_client);
                 var gp = await buildGp();
-                Server.Send(_client, gp);
-                foreach (var users in Server.users) {
-                    var pawn2 = users.pawn.Length == 6 ? $" pawn=\"{users.pawn}\"" : "";
-                    var mnick2 = $"Testing{PacketHandler.rand.Next(0, 110)}";
-                    var userU = $"<u{pawn2} f=\"{users.f}\" flag=\"{users.f}\" rank=\"{users.RealRank}\" u=\"{users.id}\" q=\"3\" {(string.IsNullOrWhiteSpace(users.username) ? "" : $"N=\"{users.username}\"")} n=\"{mnick2}\" a=\"{users.avatar}\" h=\"{users.url}\" d0=\"{users.d0}\" d2=\"{users.d2}\" bride=\"{users.bride}\" {users.pStr}v=\"2\" cb=\"{(int)(DateTime.UtcNow - Server.StartTime).TotalSeconds}\" />\0";
-                    Server.Send(_client, userU);
-                    Server.Send(users._client, myPackity);
-                }
-                //Server.Broadcast(myPackity, this);
-                Server.Send(_client, "<done />");
+                Console.WriteLine(gp);
+                //Server.Send(_client, gp);
                 await Database.Close();
             }
             return true;
@@ -182,41 +174,16 @@ public class  Client : IDisposable {
         }
         return false;
     }
-    private async Task<string> buildGp() {
-        var Already = new List<int>();
-        var assigned = await Database.FetchArrayList($"SELECT power FROM `group_powers` WHERE `chat`='{this.group}' ");
-        var group = await Database.FetchArray($"SELECT * FROM chats WHERE `name`='{this.group}'");
-        var lastId = await Database.FetchArray($"SELECT section FROM powers ORDER BY id DESC LIMIT 1");
-        var maxSect = Convert.ToInt16(lastId["section"].ToString().Replace("p", "")) + 1;
-        for (int i = 0; i < maxSect; i++) {
-            GroupPowers.Add(i, 0);
+    private async  Task<string> buildGp() {
+        Console.WriteLine(this.group);
+        var assigned = await Database.FetchArray($"SELECT * FROM group_powers WHERE chat={this.group}");
+        var group = await Database.FetchArray($"SELECT * FROM chats WHERE name={this.group}");
+        var lastId = await Database.FetchArray($"SELECT * FROM powers ORDER BY id DESC LIMIT 1");
+        var maxSect = lastId["section"].ToString().Replace("p", "") + 1;
+        foreach(var row in assigned) {
+            Console.WriteLine("row");
         }
-        foreach (var row in assigned) {
-            var power = await Database.FetchArray($"SELECT * FROM `powers` WHERE `id`='{row}'");
-            if (power.ContainsKey("id")) {
-                if (!Already.Contains(int.Parse(power["id"].ToString()))) {
-                    var subid = Convert.ToInt32(Math.Pow(2, Convert.ToInt32(power["id"]) % 32));
-                    var section = Convert.ToInt32(power["id"]) >> 5;
-                    GroupPowers[section] += subid;
-                    Already.Add(int.Parse(power["id"].ToString()));
-                }
-            }
-        }
-        var gp = new Dictionary<string, object>() {
-            { "p",string.Join("|", GroupPowers.Values)},
-            { "g80","{'mm':'14','mbt':48,'ss':'14','prm':'14','dnc':'14','bdg':'8'}"},
-            { "g90", group["bad"]},
-            { "g112", group["announce"]},
-            { "g246","{'dt':70,'v':1" },
-            { "g256", "{'rnk':'2','dt':65,'rt':15,'rc':'1','tg':200,'v':1}"},
-            { "g92", group["hflix"]},
-            { "g148", group["sflix"]},
-            { "g114", group["pools"]},
-            { "g100", group["link"]},
-            {"g74",group["gline"] },
-            {"g106", group["gback"] }
-        };
-        return Server.CreatePacket(gp,"gp");
+        return "";
     }
     //Dispose of more stuff if possible
     public void Dispose() {

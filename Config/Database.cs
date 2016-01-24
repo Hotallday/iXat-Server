@@ -30,20 +30,6 @@ public class Database {
         }
         return dictionary;
     }
-    public static async Task<List<object>> FetchArrayList(string query) {
-        var list = new List<object>();
-        using (var command = new MySqlCommand(query, Connection)) {
-            using (var reader = await command.ExecuteReaderAsync()) {
-                while (reader.Read()) {
-                    for (var i = 0; i < reader.FieldCount; i++) {
-                        var value = reader[i];
-                        list.Add(value);
-                    }
-                }
-            }
-        }
-        return list;
-    }
     public static async Task<object> query(string query) {
         using (var command = new MySqlCommand(query, Connection)) {
             return await command.ExecuteScalarAsync();
