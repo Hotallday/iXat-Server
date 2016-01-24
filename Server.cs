@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -12,17 +13,18 @@ namespace iXat_Server {
         internal static DateTime StartTime;
         internal static readonly IList<Client> users = new List<Client>();
         internal static readonly List<string> badged = new List<string>();
-        internal static readonly List<string> ipbans = new List<string>();
+        internal static List<string> ipbans = new List<string>();
         internal static readonly List<string> protectedc = new List<string>();
-
 
         internal static Socket ServerListener = null;
         internal static void Initialize() {
             Console.Clear();
             StartTime = DateTime.Now;
             try {
+                Database.Connect();
+                LoadConfig();
                 StartListening();
-
+                
                 Console.Read();
             }
             catch (Exception ex) {
@@ -48,11 +50,15 @@ namespace iXat_Server {
                 Config.staff = JsonConvert.DeserializeObject<List<string>>((string)conf["staff"]);
                 Config.helpers = JsonConvert.DeserializeObject<List<string>>((string)conf["helpers"]);
                 Config.pawns = JsonConvert.DeserializeObject<List<string>>((string)conf["pawns"]);
-                Config.pcount = (int)await Database.query("SELECT count(distinct section) AS count FROM powers");
+                var pocount = await Database.query("SELECT count(distinct section) AS count FROM powers");
+                Config.pcount = int.Parse(pocount.ToString());
                 Console.WriteLine(Config.pcount);
-                for (int i = 0; i < Config.staff.Count; i++) {
-                    Console.WriteLine(Config.staff[i]);
-                }
+                var IPbans = await Database.FetchArray("SELECT ipbans FROM server");
+                ipbans= JsonConvert.DeserializeObject<List<string>>((string)IPbans["ipbans"]);
+                /// Update database with process pid
+                /// Will be used later.
+                await Database.query($"UPDATE server SET pid='{Process.GetCurrentProcess().Id}'");
+                ///
                 await Database.Close();
             }
         }

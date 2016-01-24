@@ -62,6 +62,9 @@ public class Client {
         ///The packets are already in a Dictionary
         //var information = new string[] { "auth", "auth2", "u", "N", "k", "y", "fuckm1", "fuckm2", "huem3", "huem4", "h", "d0", "a", "c", "banned", "r", "b", "cv" };
         ///
+        for (int i = 0; i < Config.pcount; i++) {
+          //  this.{$"p }
+        }
         id = (string)packet["u"];
         d0 = (int)packet["d0"];
         f = 0;
