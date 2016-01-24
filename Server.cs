@@ -26,7 +26,7 @@ namespace iXat_Server
             {
                 StartListening();
 
-                Console.ReadKey();
+                Console.Read();
             }
             catch (Exception ex)
             {
