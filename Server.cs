@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace iXat_Server {
     sealed internal class Server {
@@ -104,12 +105,12 @@ namespace iXat_Server {
                     Console.WriteLine($"[SERVER]-[INFO]: Received -> {recv}");
                     Match findtype = PacketHandler.typeofpacket.Match(recv);
                     if (findtype.Success)
-                        PacketHandler.HandlePacket[findtype.Groups[1].Value](null, c);
+                        PacketHandler.HandlePacket[findtype.Groups[1].Value](Parse(recv), c);
                 }
                 c._client.BeginReceive(c.buffer, 0, c.buffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), c);
             }
             catch (Exception ex) {
-                Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex.Message}", Console.ForegroundColor = ConsoleColor.Red);
+                Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex}", Console.ForegroundColor = ConsoleColor.Red);
             }
         }
         internal static void PerformShutDown() {
@@ -128,6 +129,22 @@ namespace iXat_Server {
                 str = data.Aggregate(str, (current, attr) => current + $" {attr.Key}=\"{attr.Value}\"");
             }
             return str += " />\0";
+        }
+        public static Dictionary<string, object> Parse(string packet) {
+            try {
+                var xml = new XmlDocument();
+                xml.LoadXml(packet);
+                var root = xml.DocumentElement;
+                var attributes = new Dictionary<string, object> { };
+                attributes["type"] = root?.Name;
+                for (var x = 0; x < root?.Attributes.Count; x++) {
+                    attributes[root.Attributes[x].Name] = root.Attributes[x].Value;
+                }
+                return attributes;
+            }
+            catch (XmlException) {
+                return null;
+            }
         }
     }
 }

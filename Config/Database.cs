@@ -2,6 +2,8 @@
 using System.Threading.Tasks;
 using System;
 using MySql.Data.MySqlClient;
+using System.Linq;
+
 public class Database {
 
     private static MySqlConnection Connection;
@@ -30,7 +32,7 @@ public class Database {
         }
         return dictionary;
     }
-    public static async Task<object> query(string query) {       
+    public static async Task<object> query(string query) {
         using (var command = new MySqlCommand(query, Connection)) {
             return await command.ExecuteScalarAsync();
         }

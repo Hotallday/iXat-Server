@@ -18,6 +18,7 @@ public class PacketHandler {
         if (arg2.authenticated == true) {
             //return disconnect user
         }
+        arg2.authenticate(arg1);
     }
 
     private static void Y(Dictionary<string, object> arg1, Client arg2) {
