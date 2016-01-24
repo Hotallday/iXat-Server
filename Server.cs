@@ -1,94 +1,127 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace iXat_Server {
-    class Server {
-        private static readonly IList<Client> Users = new List<Client>();
-        private static Socket serverListener = null;
+    sealed internal class Server {
+        internal static DateTime StartTime;
+        internal static readonly IList<Client> users = new List<Client>();
+        internal static readonly List<string> badged = new List<string>();
+        internal static readonly List<string> ipbans = new List<string>();
+        internal static readonly List<string> protectedc = new List<string>();
 
-        public static void Start() {
+
+        internal static Socket ServerListener = null;
+        internal static void Initialize() {
+            Console.Clear();
+            StartTime = DateTime.Now;
             try {
-                IPEndPoint ipe = new IPEndPoint(IPAddress.Any, 1243);
-                serverListener = new Socket(ipe.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                serverListener.Bind(ipe);
-                serverListener.Listen(50);
-                serverListener.BeginAccept(new AsyncCallback(ConnectCallBack), serverListener);
-                Console.WriteLine("[SERVER]-[INFO]: Mark server is listening for connections", Console.ForegroundColor = ConsoleColor.Yellow);
+                StartListening();
+
+                Console.Read();
             }
             catch (Exception ex) {
-                Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex.Message}", Console.ForegroundColor = ConsoleColor.Red);
+                Console.WriteLine("Failed to start the server");
+                Console.WriteLine("Stack trace:", ex.Message);
+
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey();
+                Environment.Exit(1);
             }
         }
-
-        private static void ConnectCallBack(IAsyncResult ar) {
+        internal static void StartListening() {
+            IPEndPoint ipe = new IPEndPoint(IPAddress.Any, 1243);
+            ServerListener = new Socket(ipe.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            ServerListener.Bind(ipe);
+            ServerListener.Listen(50);
+            ServerListener.BeginAccept(new AsyncCallback(ConnectCallBack), ServerListener);
+            Console.WriteLine("[SERVER]-[INFO]: Mark server is listening for connections", Console.ForegroundColor = ConsoleColor.Yellow);
+        }
+        internal static async void LoadConfig() {
+            if (await Database.Open()) {
+                var conf = await Database.FetchArray("SELECT * FROM server LIMIT 0, 1");
+                Config.staff = JsonConvert.DeserializeObject<List<string>>((string)conf["staff"]);
+                Config.helpers = JsonConvert.DeserializeObject<List<string>>((string)conf["helpers"]);
+                Config.pawns = JsonConvert.DeserializeObject<List<string>>((string)conf["pawns"]);
+                Config.pcount = (int)await Database.query("SELECT count(distinct section) AS count FROM powers");
+                Console.WriteLine(Config.pcount);
+                for (int i = 0; i < Config.staff.Count; i++) {
+                    Console.WriteLine(Config.staff[i]);
+                }
+                await Database.Close();
+            }
+        }
+        internal static void ConnectCallBack(IAsyncResult ar) {
             var c = new Client(null);
             try {
-                var s = (Socket)ar.AsyncState;              
+                var s = (Socket)ar.AsyncState;
                 c = new Client(s.EndAccept(ar));
                 c._client.BeginReceive(c.buffer, 0, c.buffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), c);
-                serverListener.BeginAccept(new AsyncCallback(ConnectCallBack), serverListener);
+                ServerListener.BeginAccept(new AsyncCallback(ConnectCallBack), ServerListener);
             }
             catch (Exception ex) {
                 Console.WriteLine(ex);
                 if (c._client != null) {
                     c._client.Close();
-                    lock (Users) {
-                        Users.Remove(c);
+                    lock (users) {
+                        users.Remove(c);
                     }
                 }
             }
             finally {
-                serverListener.BeginAccept(new AsyncCallback(ConnectCallBack), serverListener);
+                ServerListener.BeginAccept(new AsyncCallback(ConnectCallBack), ServerListener);
             }
         }
-        public static void Send(Socket soc,string data) {
-            var datab = Encoding.ASCII.GetBytes(data);
-            Console.WriteLine($"[SERVER]-[INFO]: Send -> {data}", Console.ForegroundColor = ConsoleColor.Green);
-            soc.BeginSend(datab, 0, datab.Length, 0, new AsyncCallback(SendCallBack), soc);
-        }
-
-        private static void SendCallBack(IAsyncResult ar) {
+        internal static void SendCallBack(IAsyncResult ar) {
             try {
                 Socket handler = (Socket)ar.AsyncState;
                 int bytesSent = handler.EndSend(ar);
             }
-            catch (Exception e) {
-                Console.WriteLine(e.ToString());
+            catch (Exception ex) {
+                Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex.Message}", Console.ForegroundColor = ConsoleColor.Red);
             }
         }
-        public static string createPacket(Dictionary<string, string> data, string name = "packet") {
-            var str = $"<{name}";
-            if (data.Count > 0) {
-                foreach (var attr in data) {
-                    str += $" {attr.Key}=\"{attr.Value}\"";
-                }
-            }
-            return str += " />\0";
-        }
-        private static void ReceiveCallback(IAsyncResult result) {
-            var C = (Client)result.AsyncState;
+        internal static void ReceiveCallback(IAsyncResult result) {
+            var c = (Client)result.AsyncState;
             try {
-                if (C == null || C._client == null) return;
-                var bytestoread = C._client.EndReceive(result);
-                if(bytestoread > 0) {
-                    string recv = Encoding.ASCII.GetString(C.buffer,0,bytestoread);
-                    Console.WriteLine($"[SERVER]-[INFO]: Received -> {recv}", Console.ForegroundColor = ConsoleColor.Magenta);
+                if (c?._client == null)
+                    return;
+                var bytestoread = c._client.EndReceive(result);
+                if (bytestoread > 0) {
+                    string recv = Encoding.ASCII.GetString(c.buffer, 0, bytestoread);
+                    Console.ForegroundColor = ConsoleColor.DarkCyan;
+                    Console.WriteLine($"[SERVER]-[INFO]: Received -> {recv}");
                     Match findtype = PacketHandler.typeofpacket.Match(recv);
                     if (findtype.Success)
-                        PacketHandler.HandlePacket[findtype.Groups[1].Value](null, C);                          
+                        PacketHandler.HandlePacket[findtype.Groups[1].Value](null, c);
                 }
-                C._client.BeginReceive(C.buffer, 0, C.buffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), C);
+                c._client.BeginReceive(c.buffer, 0, c.buffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), c);
             }
-            catch {
-               
+            catch (Exception ex) {
+                Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex.Message}", Console.ForegroundColor = ConsoleColor.Red);
             }
+        }
+        internal static void PerformShutDown() {
+            Console.WriteLine("Shutting down the server...");
+            // TODO: Conclude safely, important running operations
+            Environment.Exit(0);
+        }
+        public static void Send(Socket soc, string data) {
+            var datab = Encoding.ASCII.GetBytes(data);
+            Console.WriteLine($"[SERVER]-[INFO]: Send -> {data}", Console.ForegroundColor = ConsoleColor.Green);
+            soc.BeginSend(datab, 0, datab.Length, 0, new AsyncCallback(SendCallBack), soc);
+        }
+        public static string CreatePacket(Dictionary<string, object> data, string name = "packet") {
+            var str = $"<{name}";
+            if (data.Count > 0) {
+                str = data.Aggregate(str, (current, attr) => current + $" {attr.Key}=\"{attr.Value}\"");
+            }
+            return str += " />\0";
         }
     }
 }

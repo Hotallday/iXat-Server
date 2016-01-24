@@ -1,24 +1,10 @@
-﻿
-using System.Configuration;
-public class Config : ConfigurationSection
+﻿using System.Collections.Generic;
+public class Config 
 {
-    [ConfigurationProperty("sDBHost")]
-    public string sDBHost { get { return (string)base["sDBHost"]; } }
-
-    [ConfigurationProperty("sDB")]
-    public string sDB { get { return (string)base["sDB"]; } }
-
-    [ConfigurationProperty("sDBUser")]
-    public string sDBUser { get { return (string)base["sDBUser"]; } }
-
-    [ConfigurationProperty("sDBPass")]
-    public string sDBPass { get { return (string)base["sDBPass"]; } }
-
-    [ConfigurationProperty("sIP")]
-    public string sIP { get { return (string)base["sIP"]; } }
-
-    [ConfigurationProperty("sPORT")]
-    public int sPORT { get { return (int)base["sPORT"]; } }
-
+    public static int spamtime = 800;
+    public static List<string> staff = new List<string>();
+    public static List<string> helpers = new List<string>();
+    public static List<string> pawns = new List<string>();
+    public static int pcount = 0;
 }
 
