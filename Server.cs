@@ -5,14 +5,13 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace iXat_Server {
     class Server {
         private static readonly IList<Client> Users = new List<Client>();
         private static Socket serverListener = null;
-
-
 
         public static void Start() {
             try {
@@ -49,6 +48,22 @@ namespace iXat_Server {
                 serverListener.BeginAccept(new AsyncCallback(ConnectCallBack), serverListener);
             }
         }
+        public static void Send(Socket soc,string data) {
+            var datab = Encoding.ASCII.GetBytes(data);
+            soc.BeginSend(datab, 0, datab.Length, 0, new AsyncCallback(SendCallBack), soc);
+        }
+
+        private static void SendCallBack(IAsyncResult ar) {
+            try {
+                Socket handler = (Socket)ar.AsyncState;
+                int bytesSent = handler.EndSend(ar);
+                Console.WriteLine("Sent {0} bytes to client.", bytesSent);
+            }
+            catch (Exception e) {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
         private static void ReceiveCallback(IAsyncResult result) {
             var C = (Client)result.AsyncState;
             try {
@@ -56,9 +71,9 @@ namespace iXat_Server {
                 var bytestoread = C._client.EndReceive(result);
                 if(bytestoread > 0) {
                     string g = Encoding.ASCII.GetString(C.buffer,0,bytestoread);
-                    var gs = new TcpClient() { Client = C._client };
-                    StreamWriter f = new StreamWriter(gs.GetStream());
-                    f.WriteLineAsync("<cross-domain-policy><allow-access-from domain='*' to-ports='*' /></cross-domain-policy>\0");
+                    Match findtype = PacketHandler.typeofpacket.Match(g);
+                    if (findtype.Success)
+                        PacketHandler.HandlePacket[findtype.Groups[1].Value](null, C);                          
                     Console.WriteLine(g);
                 }
                 C._client.BeginReceive(C.buffer, 0, C.buffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), C);
