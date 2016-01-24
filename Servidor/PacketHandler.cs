@@ -13,8 +13,18 @@ public class PacketHandler {
         { "y",Y},
         { "j2", J2},
         { "f", F },
-        { "z",Z}
+        { "z",Z},
+        {"m", M },
+        {"c",C }
     };
+
+    private static void C(Dictionary<string, object> arg1, Client arg2) {
+
+    }
+
+    private static void M(Dictionary<string, object> arg1, Client arg2) {
+        Server.Broadcast($"<m t=\"{arg1["t"]}\" u=\"{arg1["u"]}\" />\0",arg2);
+    }
 
     private static void Z(Dictionary<string, object> arg1, Client arg2) {
       
