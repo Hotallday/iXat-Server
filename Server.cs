@@ -11,7 +11,10 @@ using System.Xml;
 
 namespace iXat_Server {
     sealed internal class Server {
-        internal static DateTime StartTime;
+
+        //Just for now
+        internal static DateTime StartTime = new DateTime(1970, 1, 1);
+        //
         internal static readonly IList<Client> users = new List<Client>();
         internal static readonly List<string> badged = new List<string>();
         internal static List<string> ipbans = new List<string>();
@@ -20,15 +23,14 @@ namespace iXat_Server {
         internal static Socket ServerListener = null;
         internal static void Initialize() {
             Console.Clear();
-            StartTime = DateTime.Now;
+            //StartTime = DateTime.Now;
             try {
                 Database.Connect();
                 LoadConfig();
                 StartListening();
-                
+
                 Console.Read();
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 Console.WriteLine("Failed to start the server");
                 Console.WriteLine("Stack trace:", ex.Message);
 
@@ -55,7 +57,7 @@ namespace iXat_Server {
                 Config.pcount = int.Parse(pocount.ToString());
                 Console.WriteLine(Config.pcount);
                 var IPbans = await Database.FetchArray("SELECT ipbans FROM server");
-                ipbans= JsonConvert.DeserializeObject<List<string>>((string)IPbans["ipbans"]);
+                ipbans = JsonConvert.DeserializeObject<List<string>>((string)IPbans["ipbans"]);
                 /// Update database with process pid
                 /// Will be used later.
                 await Database.query($"UPDATE server SET pid='{Process.GetCurrentProcess().Id}'");
@@ -68,28 +70,30 @@ namespace iXat_Server {
             try {
                 var s = (Socket)ar.AsyncState;
                 c = new Client(s.EndAccept(ar));
+                users.Add(c);
                 c._client.BeginReceive(c.buffer, 0, c.buffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), c);
                 ServerListener.BeginAccept(new AsyncCallback(ConnectCallBack), ServerListener);
-            }
-            catch (Exception ex) {
-                Console.WriteLine(ex);
+            } catch (Exception ex) when (ex is ObjectDisposedException || ex is SocketException) {
+                if (ex is ObjectDisposedException) {
+                    return;
+                }
+                Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex}", Console.ForegroundColor = ConsoleColor.Red);
                 if (c._client != null) {
-                    c._client.Close();
+                    c.Dispose();
                     lock (users) {
                         users.Remove(c);
                     }
                 }
-            }
-            finally {
-                ServerListener.BeginAccept(new AsyncCallback(ConnectCallBack), ServerListener);
+                //   } finally {
+                // ServerListener.BeginAccept(new AsyncCallback(ConnectCallBack), ServerListener);
+                // }
             }
         }
         internal static void SendCallBack(IAsyncResult ar) {
             try {
                 Socket handler = (Socket)ar.AsyncState;
                 int bytesSent = handler.EndSend(ar);
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex.Message}", Console.ForegroundColor = ConsoleColor.Red);
             }
         }
@@ -106,17 +110,40 @@ namespace iXat_Server {
                     Match findtype = PacketHandler.typeofpacket.Match(recv);
                     if (findtype.Success)
                         PacketHandler.HandlePacket[findtype.Groups[1].Value](Parse(recv), c);
+                } else {
+                    Disconnect(c);
                 }
                 c._client.BeginReceive(c.buffer, 0, c.buffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), c);
-            }
-            catch (Exception ex) {
-                Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex}", Console.ForegroundColor = ConsoleColor.Red);
+            } catch (Exception ex) when (ex is ObjectDisposedException || ex is SocketException) {
+                if (ex is ObjectDisposedException) {
+                    return;
+                }
+                if (c._client != null) {
+                    c.Dispose();
+                    Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex}", Console.ForegroundColor = ConsoleColor.Red);
+                    lock (users) {
+                        users.Remove(c);
+                    }
+                }
             }
         }
+        
+        internal static void Disconnect(Client c) {
+            users.Remove(c);
+            c.Dispose();
+        }
         internal static void PerformShutDown() {
-            Console.WriteLine("Shutting down the server...");
-            // TODO: Conclude safely, important running operations
-            Environment.Exit(0);
+            try {
+                Console.WriteLine("Shutting down the server...");
+                // TODO: Conclude safely, important running operations
+                foreach (var c in users) {
+                    Notice(c._client, "Server shutting down.");
+                    c.Dispose();
+                }
+                ServerListener.Dispose();
+            } finally {
+                Environment.Exit(0);
+            }
         }
         public static void Send(Socket soc, string data) {
             var datab = Encoding.ASCII.GetBytes(data);
@@ -141,10 +168,14 @@ namespace iXat_Server {
                     attributes[root.Attributes[x].Name] = root.Attributes[x].Value;
                 }
                 return attributes;
-            }
-            catch (XmlException) {
+            } catch (XmlException) {
                 return null;
             }
+        }
+        public static void Notice(Socket soc, string message) {
+            var datab = Encoding.ASCII.GetBytes($"<n t=\"{message}\" />\0");
+            Console.WriteLine($"[SERVER]-[INFO]: Send -> {message}", Console.ForegroundColor = ConsoleColor.Green);
+            soc.BeginSend(datab, 0, datab.Length, 0, new AsyncCallback(SendCallBack), soc);
         }
     }
 }

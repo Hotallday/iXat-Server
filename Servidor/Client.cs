@@ -10,16 +10,16 @@ using System.Threading.Tasks;
 /// <summary>
 /// TODO FIX database queries. All of them allow SQL INJECTION
 /// </summary>
-public class Client {
+public class  Client : IDisposable {
     public readonly Socket _client;
 
-    public string bann, bride, rank, RealRank, id, username, nickname, password, avatar, url, powers, room, xats, days, chat, banned;
-    public int d0, d1, d2, d3, d4, d5, d6, dt, dx, dO, p0, p1, p2, p4, PowerO, d7, p3, f, f2, k, k2, k3, pool;
+    public string bann, brid, RealRank, username, nickname, password, avatar, url, powers, room, xats, days, chat, banned;
+    public int d0, d1, d2, d3, d4, d5, d6, dt, dx, dO, p0, p1, p2, p4, PowerO, d7, p3, f, f2, k, k2, k3, pool, rank, id;
     public string homepage, h, group, pStr, pStr2;
-    public string hash2 = "", loginkey = null, rExpired = "0", pawn = "";
-    public int poolLimit = 60, app = 0, policy = 0;
+    public string hash2 = "", loginkey = null, pawn = "";
+    public int poolLimit = 60, app = 0, policy = 0, rExpired = 0;
     public List<string> last, last2, GroupPools, GroupPowers = new List<string>();
-    public bool hidden = false, b2, b, botOnline = false, sendJ2 = false, gotTickled = false, _null = false, switchingPools = false, joined = false, away = false, authenticated = false, online = false, disconnect = false, mobready = false, chatPass = false;
+    public bool hidden = false, b2, b, guest = true, botOnline = false, sendJ2 = false, gotTickled = false, _null = false, switchingPools = false, joined = false, away = false, authenticated = false, online = false, disconnect = false, mobready = false, chatPass = false;
     public string handshake, cv;
     public byte[] buffer = new byte[1204];
     public uint[] l5 = new uint[] { 4286545791, 4286217085, 4285954170, 4285756791, 4285625204, 4285493618 };
@@ -69,24 +69,25 @@ public class Client {
             for (int i = 0; i < Config.pcount; i++) {
                 if (packet.ContainsKey($"d{i + 4}")) {
                     pStr += $"p{i}=\"{packet[$"d{i + 4}"]}\"";
-                }
-                else {
+                } else {
                     pStr += "p{i}=\"0\"";
                 }
             }
-            id = (string)packet["u"];
+            id = int.Parse(packet["u"].ToString());
             if (packet.ContainsKey("d0")) {
                 d0 = (int)packet["d0"];
             }
             f = 0;
             f2 = int.Parse(packet["f"].ToString());
-            var n = (string)packet["N"];
+            var n = "";
+            if (packet.ContainsKey("N")) {
+                 n = (string)packet["N"];
+            }
             var k = int.Parse(packet["k"].ToString());
             this.k = k;
             if (!packet.ContainsKey("pool")) {
                 var pool = this.pool;
-            }
-            else {
+            } else {
                 var pool = (int)packet["pool"];
                 this.pool = pool;
             }
@@ -100,8 +101,7 @@ public class Client {
             authenticated = true;
 
             joinRoom(chat, true, true, 1, 0, false).Wait();
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex}", Console.ForegroundColor = ConsoleColor.Red);
         }
     }
@@ -127,19 +127,47 @@ public class Client {
                 }
                 ///
                 /// New user gets quest rank
+                /// TODO Stop using php time()
                 if (!ranks.ContainsKey("f")) {
                     ranks["f"] = 5;
                     await Database.query($"INSERT INTO ranks(userid,chatid,f) VALUES({id}, {chatinfo["id"]}, 5)");
                 }
                 ///
+                ///Temp Rank
+                else if (int.Parse(ranks["tempend"].ToString()) > 0 && int.Parse(ranks["tempend"].ToString()) < (int)(DateTime.UtcNow - Server.StartTime).TotalSeconds) {
+                    ranks["f"] = 3;
+                    await Database.query($"UPDATE ranks SET f=3, tempend=0 WHERE userid={id} AND chatid={chatinfo["id"]}");
+                } else {
+                    var userrank = ranks["f"];
+                    rExpired = int.Parse(ranks["tempend"].ToString()) > (int)(DateTime.UtcNow - Server.StartTime).TotalSeconds ? int.Parse(ranks["tempend"].ToString()) : 0;
+                }
+                rank = (int)ranks["f"];
+                ///
+                if (id == 2) {
+                    id = (int)(DateTime.UtcNow - Server.StartTime).TotalSeconds + 000000;
+                    _null = true;
+                    username = null;
+                    k2 = 0;
+                    k = 0;
+                    k3 = 0;
+                    guest = true;
+                } else {
+                    //updateDetails
+                    //resetDetails
+                    _null = false;
+                }
+                Server.Send(_client, "<i b=\"http://i.cubeupload.com/ftN0AD.png;=Deal;=22497272;=English;=http://87.230.56.15:80/;=#CCCC99;=\" f=\"21233730\" f2=\"4096\" cb=\"2317\" />\0");
                 await Database.Close();
             }
             return true;
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex}", Console.ForegroundColor = ConsoleColor.Red);
         }
         return false;
+    }
+    //Dispose of more stuff if possible
+    public void Dispose() {
+        _client.Dispose();
     }
 }
 
