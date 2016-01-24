@@ -1,0 +1,8 @@
+C:\Users\RsTown\Documents\Visual Studio 2015\Projects\iXat-Server\iXat-Server\bin\Debug\iXat-Server.exe.config
+C:\Users\RsTown\Documents\Visual Studio 2015\Projects\iXat-Server\iXat-Server\bin\Debug\iXat-Server.exe
+C:\Users\RsTown\Documents\Visual Studio 2015\Projects\iXat-Server\iXat-Server\bin\Debug\iXat-Server.pdb
+C:\Users\RsTown\Documents\Visual Studio 2015\Projects\iXat-Server\iXat-Server\bin\Debug\MySql.Data.dll
+C:\Users\RsTown\Documents\Visual Studio 2015\Projects\iXat-Server\iXat-Server\bin\Debug\Newtonsoft.Json.dll
+C:\Users\RsTown\Documents\Visual Studio 2015\Projects\iXat-Server\iXat-Server\bin\Debug\Newtonsoft.Json.xml
+C:\Users\RsTown\Documents\Visual Studio 2015\Projects\iXat-Server\iXat-Server\obj\Debug\iXat-Server.exe
+C:\Users\RsTown\Documents\Visual Studio 2015\Projects\iXat-Server\iXat-Server\obj\Debug\iXat-Server.pdb
