@@ -1,5 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using iXat_Server;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net.Sockets;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 public class Client  {
     public readonly Socket _client;
