@@ -63,7 +63,15 @@ namespace iXat_Server {
                 Console.WriteLine(e.ToString());
             }
         }
-
+        public static string createPacket(Dictionary<string, string> data, string name = "packet") {
+            var str = $"<{name}";
+            if (data.Count > 0) {
+                foreach (var attr in data) {
+                    str += $" {attr.Key}=\"{attr.Value}\"";
+                }
+            }
+            return str += " />\0";
+        }
         private static void ReceiveCallback(IAsyncResult result) {
             var C = (Client)result.AsyncState;
             try {
