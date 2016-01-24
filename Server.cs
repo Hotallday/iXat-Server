@@ -134,15 +134,15 @@ namespace iXat_Server {
             users.Remove(c);
             c.Dispose();
         }
-        internal static void Broadcast(string message, Socket ignore = null) {
-            if (ignore != null) {
+        internal static void Broadcast(string message, Client ignore = null) {
+            if (ignore == null) {
                 foreach (var c in users) {
                     Send(c._client, message);
                 }
             }
             else {
                 foreach (var c in users) {
-                    if (c._client != ignore) {
+                    if (c != ignore) {
                         Send(c._client, message);
                     }
                 }
@@ -163,7 +163,7 @@ namespace iXat_Server {
         }
         public static void Send(Socket soc, string data) {
             var datab = Encoding.ASCII.GetBytes(data);
-            Console.WriteLine($"[SERVER]-[INFO]: Send -> {data}", Console.ForegroundColor = ConsoleColor.Green);
+            //Console.WriteLine($"[SERVER]-[INFO]: Send -> {data}", Console.ForegroundColor = ConsoleColor.Green);
             soc.BeginSend(datab, 0, datab.Length, 0, new AsyncCallback(SendCallBack), soc);
         }
         public static string CreatePacket(Dictionary<string, object> data, string name = "packet") {
