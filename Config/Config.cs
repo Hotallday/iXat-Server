@@ -1,5 +1,5 @@
-﻿
-using System.Configuration;
+﻿using System.Configuration;
+
 public class Config : ConfigurationSection
 {
     [ConfigurationProperty("sDBHost")]

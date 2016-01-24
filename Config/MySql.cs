@@ -9,17 +9,17 @@ namespace iXat_Server.Config
     {
 
         private static MySqlConnection Connection;
-        public static string URL;
-        public static string USER;
-        public static string PASSWORD;
-        public static string DATABASE;
+        public static string Url;
+        public static string User;
+        public static string Password;
+        public static string Database;
 
         public static void Connect()
         {
-            string connectionString = "SERVER=" + URL + ";" + "DATABASE=" +
-                                            DATABASE + ";" + "UID=" + USER + ";" + "PASSWORD=" + PASSWORD + ";";
+            string connectionString = $"SERVER={Url};DATABASE={Database};UID={User};PASSWORD={Password};";
             Connection = new MySqlConnection(connectionString);
         }
+
         public static async Task<MySqlConnection> getConnection()
         {
             Connect();
@@ -58,6 +58,7 @@ namespace iXat_Server.Config
             await openAsync;
             return true;
         }
+
         public static async Task<bool> Close()
         {
             var openAsync = Connection?.CloseAsync();
