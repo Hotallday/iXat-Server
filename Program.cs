@@ -26,14 +26,11 @@ namespace iXat_Server {
                 Console.Title = "Xat Server";
                 DeleteMenu(GetSystemMenu(GetConsoleWindow(), false), SC_CLOSE, MF_BYCOMMAND);
             }
-
             Console.CancelKeyPress += (object sender, ConsoleCancelEventArgs e) => {
                 Server.PerformShutDown();
                 e.Cancel = true;
             };
-
             Console.CursorVisible = false;
-
             Server.Initialize();
         }
     }

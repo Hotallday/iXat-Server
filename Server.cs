@@ -80,9 +80,8 @@ namespace iXat_Server {
                 Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex}", Console.ForegroundColor = ConsoleColor.Red);
                 if (c._client != null) {
                     c.Dispose();
-                    lock (users) {
-                        users.Remove(c);
-                    }
+                    users.Remove(c);
+
                 }
                 //   } finally {
                 // ServerListener.BeginAccept(new AsyncCallback(ConnectCallBack), ServerListener);
@@ -121,16 +120,33 @@ namespace iXat_Server {
                 if (c._client != null) {
                     c.Dispose();
                     Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex}", Console.ForegroundColor = ConsoleColor.Red);
-                    lock (users) {
-                        users.Remove(c);
-                    }
+                    users.Remove(c);
                 }
             }
         }
         
         internal static void Disconnect(Client c) {
+            if (c.policy == 1) {
+                foreach (var s in users) {
+                    Send(s._client, $"<l u=\"{c.id}\" />\0");
+                }
+            }
             users.Remove(c);
             c.Dispose();
+        }
+        internal static void Broadcast(string message, Socket ignore = null) {
+            if (ignore != null) {
+                foreach (var c in users) {
+                    Send(c._client, message);
+                }
+            }
+            else {
+                foreach (var c in users) {
+                    if (c._client != ignore) {
+                        Send(c._client, message);
+                    }
+                }
+            }
         }
         internal static void PerformShutDown() {
             try {

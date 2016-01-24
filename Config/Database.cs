@@ -37,6 +37,9 @@ public class Database {
     }
 
     public static async Task<bool> Open() {
+        if (Connection.State == System.Data.ConnectionState.Open) {
+            return true;
+        }
         var openAsync = Connection?.OpenAsync();
         if (openAsync == null) return false;
         await openAsync;

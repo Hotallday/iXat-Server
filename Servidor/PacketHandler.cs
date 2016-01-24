@@ -11,8 +11,18 @@ public class PacketHandler {
     {
         { "policy-file-request", Policy },
         { "y",Y},
-        { "j2", J2}
+        { "j2", J2},
+        { "f", F },
+        { "z",Z}
     };
+
+    private static void Z(Dictionary<string, object> arg1, Client arg2) {
+      
+    }
+
+    private static void F(Dictionary<string, object> arg1, Client arg2) {
+ 
+    }
 
     private static void J2(Dictionary<string, object> arg1, Client arg2) {
         if (arg2.authenticated == true) {

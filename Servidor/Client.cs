@@ -13,12 +13,12 @@ using System.Threading.Tasks;
 public class  Client : IDisposable {
     public readonly Socket _client;
 
-    public string bann, brid, RealRank, username, nickname, password, avatar, url, powers, room, xats, days, chat, banned;
+    public string bann, bride, RealRank, username, nickname, password, avatar, url, powers, room, xats, days, chat, banned;
     public int d0, d1, d2, d3, d4, d5, d6, dt, dx, dO, p0, p1, p2, p4, PowerO, d7, p3, f, f2, k, k2, k3, pool, rank, id;
     public string homepage, h, group, pStr, pStr2;
     public string hash2 = "", loginkey = null, pawn = "";
     public int poolLimit = 60, app = 0, policy = 0, rExpired = 0;
-    public List<string> last, last2, GroupPools, GroupPowers = new List<string>();
+    public Dictionary<string, object> last, last2, GroupPools, GroupPowers = new Dictionary<string, object>();
     public bool hidden = false, b2, b, guest = true, botOnline = false, sendJ2 = false, gotTickled = false, _null = false, switchingPools = false, joined = false, away = false, authenticated = false, online = false, disconnect = false, mobready = false, chatPass = false;
     public string handshake, cv;
     public byte[] buffer = new byte[1204];
@@ -68,9 +68,9 @@ public class  Client : IDisposable {
         try {
             for (int i = 0; i < Config.pcount; i++) {
                 if (packet.ContainsKey($"d{i + 4}")) {
-                    pStr += $"p{i}=\"{packet[$"d{i + 4}"]}\"";
+                    pStr += $" p{i}=\"{packet[$"d{i + 4}"]}\" ";
                 } else {
-                    pStr += "p{i}=\"0\"";
+                    pStr += $" p{i}=\"0\" ";
                 }
             }
             id = int.Parse(packet["u"].ToString());
@@ -143,6 +143,7 @@ public class  Client : IDisposable {
                 }
                 rank = (int)ranks["f"];
                 ///
+                //Check if user is null Null id is 2
                 if (id == 2) {
                     id = (int)(DateTime.UtcNow - Server.StartTime).TotalSeconds + 000000;
                     _null = true;
@@ -157,6 +158,14 @@ public class  Client : IDisposable {
                     _null = false;
                 }
                 Server.Send(_client, "<i b=\"http://i.cubeupload.com/ftN0AD.png;=Deal;=22497272;=English;=http://87.230.56.15:80/;=#CCCC99;=\" f=\"21233730\" f2=\"4096\" cb=\"2317\" />\0");
+                chat = int.Parse(chatinfo["id"].ToString());
+                var pawn = this.pawn.Length == 6 ? $" pawn=\"{this.pawn}\"" : "";
+                var mnick = $"Testing{PacketHandler.rand.Next(0,110)}";
+                var myPackity = $"<u{pawn} f=\"{f}\" flag=\"{f}\" rank=\"{RealRank}\" u=\"{id}\" q=\"3\" {(string.IsNullOrWhiteSpace(username) ? "" : $"N=\"{username}\"")} n=\"{mnick}\" a=\"{avatar}\" h=\"{url}\" d0=\"{d0}\" d2=\"{d2}\" bride=\"{bride}\" {pStr}v=\"2\" cb=\"{(int)(DateTime.UtcNow - Server.StartTime).TotalSeconds}\" />\0";
+                Server.Broadcast(myPackity,_client);
+                var gp = await buildGp();
+                Console.WriteLine(gp);
+                //Server.Send(_client, gp);
                 await Database.Close();
             }
             return true;
@@ -164,6 +173,17 @@ public class  Client : IDisposable {
             Console.WriteLine($"[SERVER]-[INFO]-[ERROR]: {ex}", Console.ForegroundColor = ConsoleColor.Red);
         }
         return false;
+    }
+    private async  Task<string> buildGp() {
+        Console.WriteLine(this.group);
+        var assigned = await Database.FetchArray($"SELECT * FROM group_powers WHERE chat={this.group}");
+        var group = await Database.FetchArray($"SELECT * FROM chats WHERE name={this.group}");
+        var lastId = await Database.FetchArray($"SELECT * FROM powers ORDER BY id DESC LIMIT 1");
+        var maxSect = lastId["section"].ToString().Replace("p", "") + 1;
+        foreach(var row in assigned) {
+            Console.WriteLine("row");
+        }
+        return "";
     }
     //Dispose of more stuff if possible
     public void Dispose() {
