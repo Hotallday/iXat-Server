@@ -6,3 +6,4 @@ C:\Users\RsTown\Documents\Visual Studio 2015\Projects\iXat-Server\iXat-Server\bi
 C:\Users\RsTown\Documents\Visual Studio 2015\Projects\iXat-Server\iXat-Server\bin\Debug\Newtonsoft.Json.xml
 C:\Users\RsTown\Documents\Visual Studio 2015\Projects\iXat-Server\iXat-Server\obj\Debug\iXat-Server.exe
 C:\Users\RsTown\Documents\Visual Studio 2015\Projects\iXat-Server\iXat-Server\obj\Debug\iXat-Server.pdb
+C:\Users\RsTown\Documents\Visual Studio 2015\Projects\iXat-Server\iXat-Server\obj\Debug\iXat-Server.csprojResolveAssemblyReference.cache

@@ -54,15 +54,23 @@
   <ItemGroup>
     <Compile Include="Config\Config.cs" />
     <Compile Include="Config\Database.cs" />
-    <Compile Include="Manipuladores\Aut.cs" />
+    <Compile Include="handler\packets\C.cs" />
+    <Compile Include="handler\packets\F.cs" />
+    <Compile Include="handler\packets\J2.cs" />
+    <Compile Include="handler\packets\M.cs" />
+    <Compile Include="handler\packets\Policy.cs" />
+    <Compile Include="handler\packets\Y.cs" />
+    <Compile Include="handler\packets\Z.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server.cs" />
-    <Compile Include="Servidor\PacketHandler.cs" />
+    <Compile Include="handler\PacketHandler.cs" />
     <Compile Include="Servidor\Client.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />
